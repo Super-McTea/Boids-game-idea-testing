@@ -48,7 +48,7 @@ Rigidbody:
   m_UseGravity: 1
   m_IsKinematic: 1
   m_Interpolate: 0
-  m_Constraints: 0
+  m_Constraints: 84
   m_CollisionDetection: 0
 --- !u!135 &4123990435398065257
 SphereCollider:
@@ -75,7 +75,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0ad8c13e6fb6644da542c11d9d23cd2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 10
+  separation: 2
+  alignment: 1
+  cohesion: 1
+  speed: 2
+  rotationSpeed: 45
 --- !u!1 &6060630861250551369
 GameObject:
   m_ObjectHideFlags: 0
