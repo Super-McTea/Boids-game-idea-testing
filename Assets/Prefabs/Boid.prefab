@@ -80,6 +80,7 @@ MonoBehaviour:
   cohesion: 1
   speed: 2
   rotationSpeed: 45
+  radius: 3
 --- !u!1 &6060630861250551369
 GameObject:
   m_ObjectHideFlags: 0
@@ -91,7 +92,6 @@ GameObject:
   - component: {fileID: 239776457925013796}
   - component: {fileID: 103786615554983569}
   - component: {fileID: 2093432113464003070}
-  - component: {fileID: 7518133589276080639}
   m_Layer: 10
   m_Name: BoidMesh
   m_TagString: Untagged
@@ -162,17 +162,3 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!136 &7518133589276080639
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6060630861250551369}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 1
-  m_Enabled: 1
-  m_Radius: 0.5
-  m_Height: 2
-  m_Direction: 1
-  m_Center: {x: 0, y: 0, z: 0}

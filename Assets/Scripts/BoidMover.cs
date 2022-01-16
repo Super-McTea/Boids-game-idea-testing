@@ -18,6 +18,8 @@ public class BoidMover : MonoBehaviour
     private float speed = 10;
     [SerializeField]
     private float rotationSpeed = 10;
+    [SerializeField]
+    private float radius = 3;
 
 
     // Start is called before the first frame update
@@ -29,7 +31,6 @@ public class BoidMover : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Debug.Log(string.Format("Position: {0}", rb.position));
         transform.Translate(Vector3.forward * speed * Time.deltaTime);
     }
 
@@ -39,6 +40,8 @@ public class BoidMover : MonoBehaviour
         Separation(other);
         Alignment(other);
         Cohesion(other);
+
+        ObstacleAvoidance();
     }
 
     void Separation(Transform other)
@@ -69,4 +72,13 @@ public class BoidMover : MonoBehaviour
 
     }
 
+    void ObstacleAvoidance()
+    {
+        RaycastHit hit;
+        Debug.DrawRay(transform.position, transform.forward*radius, Color.green);
+        if (Physics.Raycast(transform.position, transform.forward, out hit, radius, Layers.Instance.obstacles))
+        {
+            Debug.Log("Wall!");
+        }
+    }
 }
