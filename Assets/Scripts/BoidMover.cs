@@ -26,6 +26,9 @@ public class BoidMover : MonoBehaviour
     private float jitterFactor = 1;
 
 
+    private List<Transform> closeBoids = new List<Transform>();
+
+
     // Start is called before the first frame update
     void Start()
     {
@@ -40,18 +43,38 @@ public class BoidMover : MonoBehaviour
         transform.Rotate(0, Random.Range(-1.0f,1.0f)*angle*jitterFactor*Time.deltaTime, 0);
     }
 
-    void OnTriggerStay(Collider coll)
+    void OnTriggerStay(Collider col)
     {
-        if (Layers.Instance.obstacles.Contains(coll.gameObject))
+        if (Layers.Instance.obstacles.Contains(col.gameObject))
         {
             ObstacleAvoidance();
         }
         else
         {
-            Transform other = coll.gameObject.transform;
+            Transform other = col.gameObject.transform;
             Separation(other);
-            Alignment(other);
-            Cohesion(other);
+            Alignment();
+            Cohesion();
+        }
+    }
+
+    void OnTriggerEnter(Collider col)
+    {
+        GameObject other = col.gameObject;
+        if (Layers.Instance.boids.Contains(other))
+        {
+            if (!closeBoids.Contains(other.transform))
+            {
+                closeBoids.Add(other.transform);
+            }
+        }
+    }
+    void OnTriggerExit(Collider col)
+    {
+        GameObject other = col.gameObject;
+        if (Layers.Instance.boids.Contains(other))
+        {
+            closeBoids.Remove(other.transform);
         }
     }
 
@@ -73,12 +96,12 @@ public class BoidMover : MonoBehaviour
         }
     }
 
-    void Alignment(Transform other)
+    void Alignment()
     {
 
     }
 
-    void Cohesion(Transform other)
+    void Cohesion()
     {
 
     }
