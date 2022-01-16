@@ -5,7 +5,6 @@ using System.Collections;
  * Extensions to Unity's LayerMask class
  * 
  */
-namespace WordsOnPlay.Utils {
 
 public static class LayerMaskExtensions  {
 
@@ -16,5 +15,4 @@ public static class LayerMaskExtensions  {
 	public static bool Contains(this LayerMask layerMask, GameObject gameObject) {
 		return (layerMask.value & (1 << gameObject.layer)) != 0;
 	}
-}
 }

@@ -78,9 +78,9 @@ MonoBehaviour:
   separation: 2
   alignment: 1
   cohesion: 1
-  speed: 2
-  rotationSpeed: 45
-  radius: 3
+  speed: 10
+  turningRadius: 1
+  jitterFactor: 1
 --- !u!1 &6060630861250551369
 GameObject:
   m_ObjectHideFlags: 0
@@ -140,7 +140,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: f5f6b45a5a237df4eac8e0601e415b1f, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
