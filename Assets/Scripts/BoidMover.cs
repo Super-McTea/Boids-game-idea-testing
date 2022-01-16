@@ -78,7 +78,7 @@ public class BoidMover : MonoBehaviour
         Debug.DrawRay(transform.position, transform.forward*radius, Color.green);
         if (Physics.Raycast(transform.position, transform.forward, out hit, radius, Layers.Instance.obstacles))
         {
-            Debug.Log("Wall!");
+            //TO DO: make 2 more rays to determine which diirection to go in, left and right
         }
     }
 }
