@@ -61,7 +61,7 @@ SphereCollider:
   m_IsTrigger: 1
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 5
+  m_Radius: 2
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &5287612601140360715
 MonoBehaviour:
@@ -75,12 +75,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0ad8c13e6fb6644da542c11d9d23cd2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  separation: 2
-  alignment: 1
-  cohesion: 1
-  speed: 10
-  turningRadius: 1
-  jitterFactor: 1
+  separationFactor: 2
+  alignmentFactor: 0.2
+  cohesionPercentage: 1
+  speed: 15
+  turningRadius: 3
+  jitterFactor: 0
+  maxBoidChecks: 5
 --- !u!1 &6060630861250551369
 GameObject:
   m_ObjectHideFlags: 0
@@ -108,7 +109,7 @@ Transform:
   m_GameObject: {fileID: 6060630861250551369}
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
+  m_LocalScale: {x: 2, y: 2, z: 2}
   m_Children: []
   m_Father: {fileID: 4391071260578196278}
   m_RootOrder: 0

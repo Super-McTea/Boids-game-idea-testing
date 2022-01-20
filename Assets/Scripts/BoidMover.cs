@@ -4,12 +4,13 @@ using UnityEngine;
 
 public class BoidMover : MonoBehaviour
 {
-    private Rigidbody rb;
+    private SphereCollider sphereCollider;
+    private float minColliderRadius = 0;
 
     [SerializeField]
     private float separationFactor = 1;
     [SerializeField]
-    private float alignmentPercentage = 1;
+    private float alignmentFactor = 1;
     [SerializeField]
     private float cohesionPercentage = 1;
 
@@ -20,20 +21,29 @@ public class BoidMover : MonoBehaviour
     private float turningRadius = 5;
     private float angle;
 
-    private float checkAngle = 30; // degrees
+    private float checkAngle = 35; // degrees
 
     [SerializeField]
     private float jitterFactor = 1;
+    [SerializeField]
+    private int maxBoidChecks = 5;
 
 
     private List<Transform> closeBoids = new List<Transform>();
+
+    private bool isObstacleAvoiding = false;
+
+    private int boidFrameCounter = 0;
 
 
     // Start is called before the first frame update
     void Start()
     {
-        rb = GetComponent<Rigidbody>();
-        angle = (360*speed)/(3*turningRadius);
+        sphereCollider = GetComponent<SphereCollider>();
+        angle = (360*speed)/(6*turningRadius);
+        //turningRadius = (360*speed)/(6.2f*angle);
+        minColliderRadius = separationFactor+1;
+        sphereCollider.radius = minColliderRadius + turningRadius;
     }
 
     // Update is called once per frame
@@ -41,20 +51,47 @@ public class BoidMover : MonoBehaviour
     {
         transform.Translate(Vector3.forward * speed * Time.deltaTime);
         transform.Rotate(0, Random.Range(-1.0f,1.0f)*angle*jitterFactor*Time.deltaTime, 0);
+        if (isObstacleAvoiding)
+        {
+            Debug.DrawRay(transform.position, transform.forward*turningRadius, Color.blue);
+        }
+        else
+        {
+            Debug.DrawRay(transform.position, transform.forward*turningRadius, Color.green);
+        }
+        if (closeBoids.Count > maxBoidChecks && sphereCollider.radius >= minColliderRadius)
+        {
+            sphereCollider.radius -= 0.5f;
+        }
+        else if (closeBoids.Count < maxBoidChecks && sphereCollider.radius <= minColliderRadius*3)
+        {
+            sphereCollider.radius += 0.5f;
+        }
+    }
+
+    void FixedUpdate()
+    {
+        boidFrameCounter = 0;
     }
 
     void OnTriggerStay(Collider col)
     {
         if (Layers.Instance.obstacles.Contains(col.gameObject))
         {
+            isObstacleAvoiding = true;
+            sphereCollider.radius = minColliderRadius;
             ObstacleAvoidance();
         }
-        else
+        else if (!isObstacleAvoiding)
         {
-            Transform other = col.gameObject.transform;
-            Separation(other);
-            Alignment();
-            Cohesion();
+            if (Layers.Instance.boids.Contains(col.gameObject) && boidFrameCounter <= maxBoidChecks)
+            {
+                boidFrameCounter += 1;
+                Transform other = col.gameObject.transform;
+                Separation(other);
+                Alignment(other);
+                Cohesion();
+            }
         }
     }
 
@@ -72,6 +109,10 @@ public class BoidMover : MonoBehaviour
     void OnTriggerExit(Collider col)
     {
         GameObject other = col.gameObject;
+        if (Layers.Instance.obstacles.Contains(other))
+        {
+            isObstacleAvoiding = false;
+        }
         if (Layers.Instance.boids.Contains(other))
         {
             closeBoids.Remove(other.transform);
@@ -96,9 +137,22 @@ public class BoidMover : MonoBehaviour
         }
     }
 
-    void Alignment()
+    void Alignment(Transform other)
     {
         // Boids have to set their rotation to the average of everyone elses.
+        float targetRotationY = wrapAround(other.eulerAngles.y - transform.eulerAngles.y);
+
+        if (targetRotationY > angle)
+        {
+            targetRotationY = angle;
+        }
+        else if (targetRotationY < -angle)
+        {
+            targetRotationY = -angle;
+        }
+
+        Debug.DrawRay(transform.position, Quaternion.Euler(0,targetRotationY,0)*transform.forward*turningRadius, Color.red);
+        transform.Rotate(0, targetRotationY*alignmentFactor*Time.deltaTime, 0);
     }
 
     void Cohesion()
@@ -108,48 +162,93 @@ public class BoidMover : MonoBehaviour
 
     void ObstacleAvoidance()
     {
-        RaycastHit hit;
-        RaycastHit left;
-        Vector3 leftAngle = Quaternion.Euler(0,-checkAngle,0) * transform.forward;
-        RaycastHit right;
-        Vector3 rightAngle = Quaternion.Euler(0,checkAngle,0) * transform.forward;
-        
-        bool frontRay = Physics.Raycast(transform.position, transform.forward, out hit, turningRadius, Layers.Instance.obstacles);
-        bool leftRay = Physics.Raycast(transform.position, leftAngle, out left, turningRadius*2, Layers.Instance.obstacles);
-        bool rightRay = Physics.Raycast(transform.position, rightAngle, out right, turningRadius*2, Layers.Instance.obstacles);
+        RaycastHit front;
+        bool frontRay = Physics.Raycast(transform.position, transform.forward, out front, turningRadius, Layers.Instance.obstacles);
 
-        Debug.DrawRay(transform.position, transform.forward*turningRadius, Color.green);
-        Debug.DrawRay(transform.position, leftAngle*turningRadius*2, Color.blue);
-        Debug.DrawRay(transform.position, rightAngle*turningRadius*2, Color.blue);
+        RaycastHit left;
+        Vector3 leftAngleFront = Quaternion.Euler(0,-checkAngle,0) * transform.forward;
+        RaycastHit leftMid;
+        Vector3 leftAngleMid = Quaternion.Euler(0,-checkAngle*2,0) * transform.forward;
+        RaycastHit leftBack;
+        Vector3 leftAngleBack = Quaternion.Euler(0,-checkAngle*3,0) * transform.forward;
+
+        RaycastHit right;
+        Vector3 rightAngleFront = Quaternion.Euler(0,checkAngle,0) * transform.forward;
+        RaycastHit rightMid;
+        Vector3 rightAngleMid = Quaternion.Euler(0,checkAngle*2,0) * transform.forward;
+        RaycastHit rightBack;
+        Vector3 rightAngleBack = Quaternion.Euler(0,checkAngle*3,0) * transform.forward;
         
+        bool leftFrontRay = Physics.Raycast(transform.position, leftAngleFront, out left, turningRadius*2, Layers.Instance.obstacles);
+        bool leftMidRay = Physics.Raycast(transform.position, leftAngleMid, out leftMid, turningRadius*2, Layers.Instance.obstacles);
+        bool leftBackRay = Physics.Raycast(transform.position, leftAngleBack, out leftBack, turningRadius*2, Layers.Instance.obstacles);
+        bool leftRay = leftFrontRay || leftMidRay || leftBackRay;
+
+        bool rightFrontRay = Physics.Raycast(transform.position, rightAngleFront, out right, turningRadius*2, Layers.Instance.obstacles);
+        bool rightMidRay = Physics.Raycast(transform.position, rightAngleMid, out rightMid, turningRadius*2, Layers.Instance.obstacles);
+        bool rightBackRay = Physics.Raycast(transform.position, rightAngleBack, out rightBack, turningRadius*2, Layers.Instance.obstacles);
+        bool rightRay = rightFrontRay || rightMidRay || rightBackRay;
+
+        Debug.DrawRay(transform.position, leftAngleFront*turningRadius*2, Color.blue);
+        Debug.DrawRay(transform.position, leftAngleMid*turningRadius*2, Color.blue);
+        Debug.DrawRay(transform.position, leftAngleBack*turningRadius*2, Color.blue);
+
+        Debug.DrawRay(transform.position, rightAngleFront*turningRadius*2, Color.blue);
+        Debug.DrawRay(transform.position, rightAngleMid*turningRadius*2, Color.blue);
+        Debug.DrawRay(transform.position, rightAngleBack*turningRadius*2, Color.blue);
+        
+        float leftDistance = left.distance;
+        if (leftMid.distance < leftDistance)
+        {
+            leftDistance = leftMid.distance;
+        }
+        if (leftBack.distance < leftDistance)
+        {
+            leftDistance = leftBack.distance;
+        }
+
+        float rightDistance = right.distance;
+        if (rightMid.distance < rightDistance)
+        {
+            rightDistance = rightMid.distance;
+        }
+        if (rightBack.distance < rightDistance)
+        {
+            rightDistance = rightBack.distance;
+        }
+
         if (frontRay)
         {
             if (leftRay)
             {
-                TurnRight(left.distance);
+                TurnRight(leftDistance);
             }
             else if (rightRay)
             {
-                TurnLeft(right.distance);
+                TurnLeft(rightDistance);
             }
             else
             {
-                TurnRight(left.distance);
+                TurnLeft(rightDistance);
             }
         }
         else
         {
             if (leftRay && rightRay)
             {
-                TurnLeft(right.distance);
+                TurnLeft(rightDistance);
             }
             else if (rightRay)
             {
-                TurnLeft(right.distance);
+                TurnLeft(rightDistance);
             }
             else if (leftRay)
             {
-                TurnRight(left.distance);
+                TurnRight(leftDistance);
+            }
+            else
+            {
+                isObstacleAvoiding = false;
             }
         }
     }
@@ -169,6 +268,19 @@ public class BoidMover : MonoBehaviour
         {
             transform.Rotate(0, angle*Time.deltaTime, 0);
         }
+    }
+
+    float wrapAround(float boundedAngle)
+    {
+        while (boundedAngle > 180)
+        {
+            boundedAngle -= 360;
+        }
+        while (boundedAngle <= -180)
+        {
+            boundedAngle += 360;
+        }
+        return boundedAngle;
     }
 
 }
