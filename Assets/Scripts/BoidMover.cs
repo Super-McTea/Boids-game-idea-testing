@@ -7,11 +7,11 @@ public class BoidMover : MonoBehaviour
     private Rigidbody rb;
 
     [SerializeField]
-    private float separation = 1;
+    private float separationFactor = 1;
     [SerializeField]
-    private float alignment = 1;
+    private float alignmentPercentage = 1;
     [SerializeField]
-    private float cohesion = 1;
+    private float cohesionPercentage = 1;
 
 
     [SerializeField]
@@ -83,7 +83,7 @@ public class BoidMover : MonoBehaviour
         float distance = (other.position-transform.position).magnitude;
         Vector3 targetPos = transform.InverseTransformPoint(other.position);
 
-        if (distance <= separation)
+        if (distance <= separationFactor)
         {
             if (targetPos.x < 0)
             {
