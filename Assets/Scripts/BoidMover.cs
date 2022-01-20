@@ -98,12 +98,12 @@ public class BoidMover : MonoBehaviour
 
     void Alignment()
     {
-
+        // Boids have to set their rotation to the average of everyone elses.
     }
 
     void Cohesion()
     {
-
+        // Boids move towards the centre of everyone else.
     }
 
     void ObstacleAvoidance()
