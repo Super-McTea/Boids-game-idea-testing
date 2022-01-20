@@ -87,11 +87,11 @@ public class BoidMover : MonoBehaviour
         {
             if (targetPos.x < 0)
             {
-                TurnRight();
+                TurnRight(turningRadius*2);
             }
             if (targetPos.x > 0)
             {
-                TurnLeft();
+                TurnLeft(turningRadius*2);
             }
         }
     }
@@ -126,41 +126,49 @@ public class BoidMover : MonoBehaviour
         {
             if (leftRay)
             {
-                TurnRight();
+                TurnRight(left.distance);
             }
             else if (rightRay)
             {
-                TurnLeft();
+                TurnLeft(right.distance);
             }
             else
             {
-                TurnRight();
+                TurnRight(left.distance);
             }
         }
         else
         {
             if (leftRay && rightRay)
             {
-                TurnLeft();
+                TurnLeft(right.distance);
             }
             else if (rightRay)
             {
-                TurnLeft();
+                TurnLeft(right.distance);
             }
             else if (leftRay)
             {
-                TurnRight();
+                TurnRight(left.distance);
             }
         }
     }
 
-    void TurnLeft()
+    void TurnLeft(float rayLength)
     {
         transform.Rotate(0, -1*angle*Time.deltaTime, 0);
+        if (rayLength <= turningRadius)
+        {
+            transform.Rotate(0, -1*angle*Time.deltaTime, 0);
+        }
     }
-    void TurnRight()
+    void TurnRight(float rayLength)
     {
         transform.Rotate(0, angle*Time.deltaTime, 0);
+        if (rayLength <= turningRadius)
+        {
+            transform.Rotate(0, angle*Time.deltaTime, 0);
+        }
     }
 
 }
