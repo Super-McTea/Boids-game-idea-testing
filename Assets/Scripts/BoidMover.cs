@@ -12,7 +12,7 @@ public class BoidMover : MonoBehaviour
     [SerializeField]
     private float alignmentFactor = 1;
     [SerializeField]
-    private float cohesionPercentage = 1;
+    private float cohesionFactor = 1;
 
 
     [SerializeField]
@@ -62,7 +62,7 @@ public class BoidMover : MonoBehaviour
     void FixedUpdate()
     {
         boidFrameCounter = 0;
-        
+
         transform.Translate(Vector3.forward * speed * Time.deltaTime);
         transform.Rotate(0, Random.Range(-1.0f,1.0f)*angle*jitterFactor*Time.deltaTime, 0);
         if (isObstacleAvoiding)
@@ -91,7 +91,7 @@ public class BoidMover : MonoBehaviour
                 Transform other = col.gameObject.transform;
                 Separation(other);
                 Alignment(other);
-                Cohesion();
+                Cohesion(other);
             }
         }
     }
@@ -156,9 +156,32 @@ public class BoidMover : MonoBehaviour
         transform.Rotate(0, targetRotationY*alignmentFactor*Time.deltaTime, 0);
     }
 
-    void Cohesion()
+    void Cohesion(Transform other)
     {
         // Boids move towards the centre of everyone else.
+        float distance = (other.position-transform.position).magnitude;
+
+        if (distance > separationFactor)
+        {
+            float targetX = (transform.InverseTransformPoint(other.position).x);
+            float targetAngle = Vector3.Angle(other.position-transform.position, transform.forward);
+            if (targetX < 0)
+            {
+                targetAngle = -targetAngle;
+            }
+
+            if (targetAngle > angle)
+            {
+                targetAngle = angle;
+            }
+            else if (targetAngle < -angle)
+            {
+                targetAngle = -angle;
+            }
+
+            Debug.DrawRay(transform.position, Quaternion.Euler(0,targetAngle,0)*transform.forward*turningRadius, Color.yellow);
+            transform.Rotate(0, targetAngle*cohesionFactor*Time.deltaTime, 0);
+        }
     }
 
     void ObstacleAvoidance()
