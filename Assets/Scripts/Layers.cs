@@ -19,6 +19,7 @@ public class Layers : MonoBehaviour
 
     public LayerMask boids;
     public LayerMask obstacles;
+    public LayerMask players;
 
     void Awake()
     {

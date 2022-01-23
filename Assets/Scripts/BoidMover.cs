@@ -7,6 +7,12 @@ public class BoidMover : MonoBehaviour
     private SphereCollider sphereCollider;
     private float minColliderRadius = 0;
 
+    private Renderer boidRenderer;
+    private Renderer boidTailRenderer;
+
+    [SerializeField]
+    private Color[] colours = new Color[4];
+
     [SerializeField]
     private float separationFactor = 1;
     [SerializeField]
@@ -35,6 +41,15 @@ public class BoidMover : MonoBehaviour
 
     private int boidFrameCounter = 0;
 
+    private int boidFlock;
+    public int BoidFlock 
+    {
+        get
+        {
+            return boidFlock;
+        }
+    }
+
 
     // Start is called before the first frame update
     void Start()
@@ -44,6 +59,13 @@ public class BoidMover : MonoBehaviour
         //turningRadius = (360*speed)/(6.2f*angle);
         minColliderRadius = separationFactor+1;
         sphereCollider.radius = minColliderRadius + turningRadius;
+
+        boidTailRenderer = GetComponent<Renderer>();
+        boidRenderer = transform.GetChild(0).GetComponent<Renderer>();
+
+        boidFlock = Random.Range(0,colours.Length);
+        boidRenderer.material.color = colours[boidFlock];
+        boidTailRenderer.material.color = colours[boidFlock];
     }
 
     // Update is called once per frame
@@ -90,8 +112,18 @@ public class BoidMover : MonoBehaviour
                 boidFrameCounter += 1;
                 Transform other = col.gameObject.transform;
                 Separation(other);
-                Alignment(other);
-                Cohesion(other);
+
+                BoidMover otherBoidMover = col.gameObject.GetComponent<BoidMover>();
+                if (otherBoidMover.BoidFlock == boidFlock)
+                {
+                    Alignment(other);
+                    Cohesion(other);
+                }
+            }
+            if (Layers.Instance.players.Contains(col.gameObject))
+            {
+                Transform other = col.gameObject.transform;
+                PlayerSeparation(other);
             }
         }
     }
@@ -166,6 +198,11 @@ public class BoidMover : MonoBehaviour
             float targetX = (transform.InverseTransformPoint(other.position).x);
             float targetAngle = Vector3.Angle(other.position-transform.position, transform.forward);
             if (targetX < 0)
+            {
+                targetAngle = -targetAngle;
+            }
+
+            if (Layers.Instance.players.Contains(other.gameObject))
             {
                 targetAngle = -targetAngle;
             }
@@ -307,4 +344,21 @@ public class BoidMover : MonoBehaviour
         return boundedAngle;
     }
 
+    void PlayerSeparation(Transform other)
+    {
+        float distance = (other.position-transform.position).magnitude;
+        Vector3 targetPos = transform.InverseTransformPoint(other.position);
+
+        if (distance <= separationFactor*2)
+        {
+            if (targetPos.x < 0)
+            {
+                TurnRight(turningRadius*2);
+            }
+            if (targetPos.x > 0)
+            {
+                TurnLeft(turningRadius*2);
+            }
+        }
+    }
 }
