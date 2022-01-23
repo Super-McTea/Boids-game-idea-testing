@@ -75,13 +75,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0ad8c13e6fb6644da542c11d9d23cd2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  separationFactor: 2
-  alignmentFactor: 0.2
+  separationFactor: 5
+  alignmentFactor: 0.7
   cohesionPercentage: 1
-  speed: 15
+  speed: 30
   turningRadius: 3
   jitterFactor: 0
-  maxBoidChecks: 5
+  maxBoidChecks: 10
 --- !u!1 &6060630861250551369
 GameObject:
   m_ObjectHideFlags: 0

@@ -49,16 +49,6 @@ public class BoidMover : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        transform.Translate(Vector3.forward * speed * Time.deltaTime);
-        transform.Rotate(0, Random.Range(-1.0f,1.0f)*angle*jitterFactor*Time.deltaTime, 0);
-        if (isObstacleAvoiding)
-        {
-            Debug.DrawRay(transform.position, transform.forward*turningRadius, Color.blue);
-        }
-        else
-        {
-            Debug.DrawRay(transform.position, transform.forward*turningRadius, Color.green);
-        }
         if (closeBoids.Count > maxBoidChecks && sphereCollider.radius >= minColliderRadius)
         {
             sphereCollider.radius -= 0.5f;
@@ -72,6 +62,17 @@ public class BoidMover : MonoBehaviour
     void FixedUpdate()
     {
         boidFrameCounter = 0;
+        
+        transform.Translate(Vector3.forward * speed * Time.deltaTime);
+        transform.Rotate(0, Random.Range(-1.0f,1.0f)*angle*jitterFactor*Time.deltaTime, 0);
+        if (isObstacleAvoiding)
+        {
+            Debug.DrawRay(transform.position, transform.forward*turningRadius, Color.blue);
+        }
+        else
+        {
+            Debug.DrawRay(transform.position, transform.forward*turningRadius, Color.green);
+        }
     }
 
     void OnTriggerStay(Collider col)
