@@ -83,8 +83,8 @@ MonoBehaviour:
   - {r: 0.61424935, g: 0.5444998, b: 0.8962264, a: 0}
   separationDistance: 6
   separationStrength: 30
-  alignmentFactor: 0
-  cohesionFactor: 0
+  alignmentFactor: 1
+  cohesionFactor: 1
   avoidanceFactor: 500
   speed: 35
   rayLength: 5
