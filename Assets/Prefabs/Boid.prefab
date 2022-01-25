@@ -77,20 +77,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   colours:
-  - {r: 0.8301887, g: 0.5936069, b: 0.58269846, a: 0}
-  - {r: 0.6932208, g: 0.754717, b: 0.45140618, a: 0}
-  - {r: 0.56518334, g: 0.764151, b: 0.68177044, a: 0}
-  - {r: 0.61424935, g: 0.5444998, b: 0.8962264, a: 0}
-  separationDistance: 6
-  separationStrength: 30
-  alignmentFactor: 1
-  cohesionFactor: 1
+  - {r: 1, g: 0.031746034, b: 0, a: 0}
+  - {r: 1, g: 0.94189715, b: 0, a: 0}
+  separationDistance: 3
+  separationStrength: 10
+  alignmentFactor: 10
+  cohesionFactor: 10
   avoidanceFactor: 500
-  speed: 35
+  speed: 30
   rayLength: 5
   angle: 30
-  maxBoidChecks: 4
-  fieldOfViewAngle: 90
+  maxBoidChecks: 10
+  fieldOfViewAngle: 92
   rayFOV: 135
 --- !u!96 &5279771617733429886
 TrailRenderer:

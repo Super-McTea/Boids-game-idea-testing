@@ -92,6 +92,7 @@ public class BoidMover : MonoBehaviour
     {
         boidFrameCounter = 0;
         Separation();
+        Alignment();
         if (isObstacleAvoiding)
         {
             ObstacleAvoidance();
@@ -135,7 +136,7 @@ public class BoidMover : MonoBehaviour
             BoidMover otherBoidMover = col.gameObject.GetComponent<BoidMover>();
             if (otherBoidMover.BoidFlock == boidFlock && IsInFOV(other))
             {
-                Alignment(other);
+                
                 Cohesion(other);
             }
         }
@@ -190,53 +191,41 @@ public class BoidMover : MonoBehaviour
         targetVector = targetVector + separationVector*separationStrength;
     }
 
-    void Alignment(Transform other)
+    void Alignment()
     {
-        // Boids have to set their rotation to the average of everyone elses.
-        float targetRotationY = wrapAround(other.eulerAngles.y - transform.eulerAngles.y);
-
-        if (targetRotationY > angle)
+        Vector3 alignmentVector = Vector3.zero;
+        for (int i = 0; i < closeBoids.Count; i++)
         {
-            targetRotationY = angle;
+            BoidMover boidMover = closeBoids[i].gameObject.GetComponent<BoidMover>();
+            if (boidMover.BoidFlock == boidFlock && IsInFOV(closeBoids[i]))
+            {
+                alignmentVector += closeBoids[i].forward;
+            }
         }
-        else if (targetRotationY < -angle)
-        {
-            targetRotationY = -angle;
-        }
+        alignmentVector.Normalize();
+        Debug.DrawRay(transform.position, alignmentVector*alignmentFactor, Color.green);
 
-        transform.Rotate(0, targetRotationY*alignmentFactor*Time.deltaTime, 0);
+        targetVector += alignmentVector*alignmentFactor;
     }
 
     void Cohesion(Transform other)
     {
         // Boids move towards the centre of everyone else.
-        float distance = (other.position-transform.position).magnitude;
+        Vector3 cohesionVector = Vector3.zero;
+        List<Vector3> cohesiveBoids = new List<Vector3>();
 
-        if (distance > separationDistance)
+        for (int i = 0; i < closeBoids.Count; i++)
         {
-            float targetX = (transform.InverseTransformPoint(other.position).x);
-            float targetAngle = Vector3.Angle(other.position-transform.position, transform.forward);
-            if (targetX < 0)
+            BoidMover boidMover = closeBoids[i].gameObject.GetComponent<BoidMover>();
+            if (boidMover.BoidFlock == boidFlock && IsInFOV(closeBoids[i]))
             {
-                targetAngle = -targetAngle;
+                cohesiveBoids.Add(closeBoids[i].position);
             }
-
-            if (Layers.Instance.players.Contains(other.gameObject))
-            {
-                targetAngle = -targetAngle;
-            }
-
-            if (targetAngle > angle)
-            {
-                targetAngle = angle;
-            }
-            else if (targetAngle < -angle)
-            {
-                targetAngle = -angle;
-            }
-
-            transform.Rotate(0, targetAngle*cohesionFactor*Time.deltaTime, 0);
         }
+        cohesionVector = Vector3.ClampMagnitude(GetMeanVector(cohesiveBoids), 1);
+        Debug.DrawRay(transform.position, cohesionVector*cohesionFactor, Color.green);
+
+        targetVector += cohesionVector*cohesionFactor;
     }
 
     void ObstacleAvoidance()
@@ -290,5 +279,22 @@ public class BoidMover : MonoBehaviour
         if(sm > (double)max * (double)max) return v.normalized * max;
         else if(sm < (double)min * (double)min) return v.normalized * min;
         return v;
+    }
+
+    private Vector3 GetMeanVector(List<Vector3> positions)
+    {
+        if(positions.Count == 0)
+        {
+            return Vector3.zero;
+        }
+    
+        Vector3 meanVector = Vector3.zero;
+    
+        foreach(Vector3 pos in positions)
+        {
+            meanVector += pos;
+        }
+    
+        return (meanVector / positions.Count);
     }
 }
