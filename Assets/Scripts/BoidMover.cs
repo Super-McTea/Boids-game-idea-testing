@@ -31,7 +31,8 @@ public class BoidMover : MonoBehaviour
     private float speed = 10;
     [SerializeField]
     private float rayLength = 5;
-    private float angle;
+    [SerializeField]
+    private float angle = 30;
 
     private int rayCount = 30;       // per side
 
@@ -39,6 +40,8 @@ public class BoidMover : MonoBehaviour
     private int maxBoidChecks = 5;
     [SerializeField]
     private float fieldOfViewAngle = 90;
+    [SerializeField]
+    private float rayFOV = 135;
 
 
     private List<Transform> closeBoids = new List<Transform>();
@@ -89,14 +92,25 @@ public class BoidMover : MonoBehaviour
     {
         boidFrameCounter = 0;
         Separation();
-        ObstacleAvoidance();
+        if (isObstacleAvoiding)
+        {
+            ObstacleAvoidance();
+        }
 
         float targetAngle = Vector3.SignedAngle(transform.forward, targetVector, Vector3.up);
 
-        Debug.DrawRay(transform.position, Quaternion.Euler(0, targetAngle, 0)*transform.forward*3, Color.yellow);
+        Debug.DrawRay(transform.position, Vector3.ClampMagnitude(targetVector,5), Color.yellow);
 
+        if (targetAngle > angle)
+        {
+            targetAngle = angle;
+        }
+        else if (targetAngle < -angle)
+        {
+            targetAngle = -angle;
+        }
         transform.Rotate(0, targetAngle, 0);
-        transform.Translate(Vector3.forward * Vector3.ClampMagnitude(targetVector, speed).magnitude * Time.deltaTime);
+        transform.Translate(Vector3.forward * Clamp(targetVector,speed,speed/2).magnitude * Time.deltaTime);
 
         targetVector = transform.forward;
 
@@ -119,11 +133,15 @@ public class BoidMover : MonoBehaviour
             
 
             BoidMover otherBoidMover = col.gameObject.GetComponent<BoidMover>();
-            if (otherBoidMover.BoidFlock == boidFlock && isInFOV(other))
+            if (otherBoidMover.BoidFlock == boidFlock && IsInFOV(other))
             {
                 Alignment(other);
                 Cohesion(other);
             }
+        }
+        if (Layers.Instance.obstacles.Contains(col.gameObject))
+        {
+            isObstacleAvoiding = true;
         }
     }
 
@@ -159,7 +177,7 @@ public class BoidMover : MonoBehaviour
             float distance = (closeBoids[i].position-transform.position).magnitude;
             float targetPosX = transform.InverseTransformPoint(closeBoids[i].position).x;
 
-            if (distance <= separationDistance)
+            if (distance <= separationDistance && IsInFOV(closeBoids[i]))
             {
                 Vector3 direction = transform.position-closeBoids[i].position;
 
@@ -229,7 +247,7 @@ public class BoidMover : MonoBehaviour
 
         for (int i = 0; i < rayCount*2; i++)
         {
-            rayAngle = Quaternion.Euler(0, Mathf.Pow(-1,i)*(fieldOfViewAngle/(rayCount))*((i+1)/2), 0) * transform.forward;
+            rayAngle = Quaternion.Euler(0, Mathf.Pow(-1,i)*(rayFOV/(rayCount))*((i+1)/2), 0) * transform.forward;
             Debug.DrawRay(transform.position, rayAngle*rayLength, Color.blue);
             
             didRayHit = Physics.Raycast(transform.position, rayAngle, out rayHit, rayLength, Layers.Instance.obstacles);
@@ -241,7 +259,10 @@ public class BoidMover : MonoBehaviour
                 return;
             }
         }
-        targetVector = targetVector + rayAngle.normalized*avoidanceFactor*10;
+        if (didRayHit)
+        {
+            targetVector = targetVector + rayAngle.normalized*avoidanceFactor*10;
+        }
     }
 
     float wrapAround(float boundedAngle)
@@ -257,9 +278,17 @@ public class BoidMover : MonoBehaviour
         return boundedAngle;
     }
 
-    bool isInFOV(Transform other)
+    bool IsInFOV(Transform other)
     {
         float targetAngle = Vector3.Angle(other.position-transform.position, transform.forward);
         return (targetAngle <= fieldOfViewAngle);
+    }
+
+    Vector3 Clamp(Vector3 v, float max, float min)
+    {
+        double sm = v.sqrMagnitude;
+        if(sm > (double)max * (double)max) return v.normalized * max;
+        else if(sm < (double)min * (double)min) return v.normalized * min;
+        return v;
     }
 }
