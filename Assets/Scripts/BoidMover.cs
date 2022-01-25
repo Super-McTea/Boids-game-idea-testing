@@ -14,23 +14,27 @@ public class BoidMover : MonoBehaviour
     private Color[] colours = new Color[4];
 
     [SerializeField]
-    private float separationFactor = 1;
+    private float separationDistance = 1;
+    [SerializeField]
+    private float separationStrength = 10;
     [SerializeField]
     private float alignmentFactor = 1;
     [SerializeField]
     private float cohesionFactor = 1;
+    [SerializeField]
+    private float avoidanceFactor = 2;
+
+    private Vector3 targetVector;
 
 
     [SerializeField]
     private float speed = 10;
     [SerializeField]
-    private float turningRadius = 5;
+    private float rayLength = 5;
     private float angle;
 
-    private int rayCount = 10;       // per side
+    private int rayCount = 30;       // per side
 
-    [SerializeField]
-    private float jitterFactor = 1;
     [SerializeField]
     private int maxBoidChecks = 5;
     [SerializeField]
@@ -57,10 +61,8 @@ public class BoidMover : MonoBehaviour
     void Start()
     {
         sphereCollider = GetComponent<SphereCollider>();
-        angle = (360*speed)/(6*turningRadius);
-        //turningRadius = (360*speed)/(6.2f*angle);
-        minColliderRadius = separationFactor+1;
-        sphereCollider.radius = minColliderRadius + turningRadius;
+        minColliderRadius = separationDistance+1;
+        sphereCollider.radius = minColliderRadius + rayLength;
 
         boidTailRenderer = GetComponent<Renderer>();
         boidRenderer = transform.GetChild(0).GetComponent<Renderer>();
@@ -86,42 +88,41 @@ public class BoidMover : MonoBehaviour
     void FixedUpdate()
     {
         boidFrameCounter = 0;
+        Separation();
+        ObstacleAvoidance();
 
-        transform.Translate(Vector3.forward * speed * Time.deltaTime);
-        transform.Rotate(0, Random.Range(-1.0f,1.0f)*angle*jitterFactor*Time.deltaTime, 0);
-        if (isObstacleAvoiding)
-        {
-            Debug.DrawRay(transform.position, transform.forward*turningRadius, Color.blue);
-        }
-        else
-        {
-            Debug.DrawRay(transform.position, transform.forward*turningRadius, Color.green);
-        }
+        float targetAngle = Vector3.SignedAngle(transform.forward, targetVector, Vector3.up);
+
+        Debug.DrawRay(transform.position, Quaternion.Euler(0, targetAngle, 0)*transform.forward*3, Color.yellow);
+
+        transform.Rotate(0, targetAngle, 0);
+        transform.Translate(Vector3.forward * Vector3.ClampMagnitude(targetVector, speed).magnitude * Time.deltaTime);
+
+        targetVector = transform.forward;
+
+        // if (isObstacleAvoiding)
+        // {
+        //     Debug.DrawRay(transform.position, transform.forward*separationDistance, Color.blue);
+        // }
+        // else
+        // {
+        //     Debug.DrawRay(transform.position, transform.forward*separationDistance, Color.green);
+        // }
     }
 
     void OnTriggerStay(Collider col)
     {
-        if (Layers.Instance.obstacles.Contains(col.gameObject) || Layers.Instance.players.Contains(col.gameObject))
+        if (Layers.Instance.boids.Contains(col.gameObject) && boidFrameCounter <= maxBoidChecks)
         {
-            isObstacleAvoiding = true;
-            sphereCollider.radius = minColliderRadius;
-            ObstacleAvoidance(Layers.Instance.players);
-            ObstacleAvoidance(Layers.Instance.obstacles);
-        }
-        else if (!isObstacleAvoiding)
-        {
-            if (Layers.Instance.boids.Contains(col.gameObject) && boidFrameCounter <= maxBoidChecks)
-            {
-                boidFrameCounter += 1;
-                Transform other = col.gameObject.transform;
-                Separation(other);
+            boidFrameCounter += 1;
+            Transform other = col.gameObject.transform;
+            
 
-                BoidMover otherBoidMover = col.gameObject.GetComponent<BoidMover>();
-                if (otherBoidMover.BoidFlock == boidFlock && isInFOV(other))
-                {
-                    Alignment(other);
-                    Cohesion(other);
-                }
+            BoidMover otherBoidMover = col.gameObject.GetComponent<BoidMover>();
+            if (otherBoidMover.BoidFlock == boidFlock && isInFOV(other))
+            {
+                Alignment(other);
+                Cohesion(other);
             }
         }
     }
@@ -150,22 +151,25 @@ public class BoidMover : MonoBehaviour
         }
     }
 
-    void Separation(Transform other)
+    void Separation()
     {
-        float distance = (other.position-transform.position).magnitude;
-        Vector3 targetPos = transform.InverseTransformPoint(other.position);
-
-        if (distance <= separationFactor)
+        Vector3 separationVector = Vector3.zero;
+        for (int i = 0; i < closeBoids.Count; i++)
         {
-            if (targetPos.x < 0)
+            float distance = (closeBoids[i].position-transform.position).magnitude;
+            float targetPosX = transform.InverseTransformPoint(closeBoids[i].position).x;
+
+            if (distance <= separationDistance)
             {
-                TurnRight(turningRadius*2);
-            }
-            if (targetPos.x > 0)
-            {
-                TurnLeft(turningRadius*2);
+                Vector3 direction = transform.position-closeBoids[i].position;
+
+                Debug.DrawRay(transform.position, (direction)*(separationDistance-distance), Color.red);
+                
+                separationVector += direction.normalized*(separationDistance-distance);
             }
         }
+        Debug.DrawRay(transform.position, separationVector, Color.blue);
+        targetVector = targetVector + separationVector*separationStrength;
     }
 
     void Alignment(Transform other)
@@ -182,7 +186,6 @@ public class BoidMover : MonoBehaviour
             targetRotationY = -angle;
         }
 
-        Debug.DrawRay(transform.position, Quaternion.Euler(0,targetRotationY,0)*transform.forward*turningRadius, Color.red);
         transform.Rotate(0, targetRotationY*alignmentFactor*Time.deltaTime, 0);
     }
 
@@ -191,7 +194,7 @@ public class BoidMover : MonoBehaviour
         // Boids move towards the centre of everyone else.
         float distance = (other.position-transform.position).magnitude;
 
-        if (distance > separationFactor)
+        if (distance > separationDistance)
         {
             float targetX = (transform.InverseTransformPoint(other.position).x);
             float targetAngle = Vector3.Angle(other.position-transform.position, transform.forward);
@@ -214,109 +217,31 @@ public class BoidMover : MonoBehaviour
                 targetAngle = -angle;
             }
 
-            Debug.DrawRay(transform.position, Quaternion.Euler(0,targetAngle,0)*transform.forward*turningRadius, Color.yellow);
             transform.Rotate(0, targetAngle*cohesionFactor*Time.deltaTime, 0);
         }
     }
 
-    void ObstacleAvoidance(LayerMask layers)
+    void ObstacleAvoidance()
     {
-        RaycastHit front;
-        bool frontRay = Physics.Raycast(transform.position, transform.forward, out front, turningRadius, Layers.Instance.obstacles);
+        RaycastHit rayHit;
+        Vector3 rayAngle = Vector3.zero;
+        bool didRayHit = false;
 
-        RaycastHit[] left = new RaycastHit[rayCount];
-        Vector3[] leftAngle = new Vector3[rayCount];
-
-        RaycastHit[] right = new RaycastHit[rayCount];
-        Vector3[] rightAngle = new Vector3[rayCount];
-        
-        bool[] leftRays = new bool[rayCount];
-        bool[] rightRays = new bool[rayCount];
-
-        bool leftRay = false;
-        bool rightRay = false;
-
-        float leftDistance = float.MaxValue;
-        float rightDistance = float.MaxValue;
-
-        for (int i = 0; i < left.Length; i++)
+        for (int i = 0; i < rayCount*2; i++)
         {
-            leftAngle[i] = Quaternion.Euler(0,-(fieldOfViewAngle/(2*rayCount))*(i+1),0) * transform.forward;
-            rightAngle[i] = Quaternion.Euler(0,(fieldOfViewAngle/(2*rayCount))*(i+1),0) * transform.forward;
-
-            leftRays[i] = Physics.Raycast(transform.position, leftAngle[i], out left[i], turningRadius*2, layers);
-            rightRays[i] = Physics.Raycast(transform.position, rightAngle[i], out right[i], turningRadius*2, layers);
-
-            if (leftRays[i])
+            rayAngle = Quaternion.Euler(0, Mathf.Pow(-1,i)*(fieldOfViewAngle/(rayCount))*((i+1)/2), 0) * transform.forward;
+            Debug.DrawRay(transform.position, rayAngle*rayLength, Color.blue);
+            
+            didRayHit = Physics.Raycast(transform.position, rayAngle, out rayHit, rayLength, Layers.Instance.obstacles);
+            
+            if (!didRayHit)
             {
-                Debug.DrawRay(transform.position, leftAngle[i]*left[i].distance, Color.blue);
-            }
-            if (rightRays[i])
-            {
-                Debug.DrawRay(transform.position, rightAngle[i]*right[i].distance, Color.blue);
-            }
-
-            if (left[i].distance < leftDistance)
-            {
-                leftDistance = left[i].distance;
-            }
-            if (right[i].distance < rightDistance)
-            {
-                rightDistance = right[i].distance;
-            }
-
-            leftRay = leftRay || leftRays[i];
-            rightRay = rightRay || rightRays[i];
-        }
-        
-
-        if (frontRay)
-        {
-            if (leftRay)
-            {
-                TurnRight(leftDistance);
-            }
-            else if (rightRay)
-            {
-                TurnLeft(rightDistance);
-            }
-            else
-            {
-                TurnLeft(rightDistance);
+                Debug.DrawRay(transform.position, rayAngle*rayLength, Color.green);
+                targetVector = targetVector + rayAngle.normalized*avoidanceFactor*10;
+                return;
             }
         }
-        else
-        {
-            if (leftRay && rightRay)
-            {
-                TurnLeft(rightDistance);
-            }
-            else if (rightRay)
-            {
-                TurnLeft(rightDistance);
-            }
-            else if (leftRay)
-            {
-                TurnRight(leftDistance);
-            }
-        }
-    }
-
-    void TurnLeft(float rayLength)
-    {
-        transform.Rotate(0, -1*angle*Time.deltaTime, 0);
-        if (rayLength <= turningRadius)
-        {
-            transform.Rotate(0, -1*angle*Time.deltaTime, 0);
-        }
-    }
-    void TurnRight(float rayLength)
-    {
-        transform.Rotate(0, angle*Time.deltaTime, 0);
-        if (rayLength <= turningRadius)
-        {
-            transform.Rotate(0, angle*Time.deltaTime, 0);
-        }
+        targetVector = targetVector + rayAngle.normalized*avoidanceFactor*10;
     }
 
     float wrapAround(float boundedAngle)

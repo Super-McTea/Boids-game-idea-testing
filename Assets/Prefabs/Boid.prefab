@@ -81,12 +81,13 @@ MonoBehaviour:
   - {r: 0.6932208, g: 0.754717, b: 0.45140618, a: 0}
   - {r: 0.56518334, g: 0.764151, b: 0.68177044, a: 0}
   - {r: 0.61424935, g: 0.5444998, b: 0.8962264, a: 0}
-  separationFactor: 2
-  alignmentFactor: 1
-  cohesionFactor: 1
+  separationDistance: 3
+  separationStrength: 10
+  alignmentFactor: 0
+  cohesionFactor: 0
+  avoidanceFactor: 500
   speed: 20
-  turningRadius: 1
-  jitterFactor: 0
+  rayLength: 5
   maxBoidChecks: 10
   fieldOfViewAngle: 90
 --- !u!96 &5279771617733429886
