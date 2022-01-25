@@ -566,6 +566,10 @@ PrefabInstance:
       propertyPath: boidCount
       value: 200
       objectReference: {fileID: 0}
+    - target: {fileID: 2208247288729460917, guid: f04f6ece402904158996387e6fd9ddc1, type: 3}
+      propertyPath: spawnTimer
+      value: 0.001
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f04f6ece402904158996387e6fd9ddc1, type: 3}
 --- !u!1001 &1923187744394802785
