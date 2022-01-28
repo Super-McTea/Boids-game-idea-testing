@@ -111,7 +111,7 @@ public class BoidMover : MonoBehaviour
             targetAngle = -angle;
         }
         transform.Rotate(0, targetAngle, 0);
-        transform.Translate(Vector3.forward * Clamp(targetVector,speed,speed/2).magnitude * Time.deltaTime);
+        transform.Translate(Vector3.forward * Clamp(targetVector, speed, 1).magnitude * Time.deltaTime);
 
         targetVector = transform.forward;
 
@@ -230,28 +230,41 @@ public class BoidMover : MonoBehaviour
 
     void ObstacleAvoidance()
     {
-        RaycastHit rayHit;
-        Vector3 rayAngle = Vector3.zero;
-        bool didRayHit = false;
+        RaycastHit[] rayHit = new RaycastHit[rayCount*2+1];
+        Vector3[] rayAngle = new Vector3[rayCount*2+1];
+        bool[] didRayHit = new bool[rayCount*2+1];
+        bool seeObstacle = false;
 
-        for (int i = 0; i < rayCount*2; i++)
+        for (int i = 0; i < rayHit.Length; i++)
         {
-            rayAngle = Quaternion.Euler(0, Mathf.Pow(-1,i)*(rayFOV/(rayCount))*((i+1)/2), 0) * transform.forward;
-            Debug.DrawRay(transform.position, rayAngle*rayLength, Color.blue);
+            rayAngle[i] = Quaternion.Euler(0, Mathf.Pow(-1,i)*(rayFOV/(rayCount))*((i+1)/2), 0) * transform.forward;
+            Debug.DrawRay(transform.position, rayAngle[i]*rayLength, Color.blue);
             
-            didRayHit = Physics.Raycast(transform.position, rayAngle, out rayHit, rayLength, Layers.Instance.obstacles);
-            
-            if (!didRayHit)
+            didRayHit[i] = Physics.Raycast(transform.position, rayAngle[i], out rayHit[i], rayLength, Layers.Instance.obstacles);
+            seeObstacle = seeObstacle || didRayHit[i];
+        }
+
+        if (seeObstacle)
+        {
+            for (int i = 0; i < rayAngle.Length; i++)
             {
-                Debug.DrawRay(transform.position, rayAngle*rayLength, Color.green);
-                targetVector = targetVector + rayAngle.normalized*avoidanceFactor*10;
-                return;
+                // To Do
             }
         }
-        if (didRayHit)
-        {
-            targetVector = targetVector + rayAngle.normalized*avoidanceFactor*10;
-        }
+
+
+
+        // if (didRayHit)
+        // {
+        //     targetVector = targetVector + rayAngle.normalized*avoidanceFactor*10;
+        // }
+
+        // if (!didRayHit)
+        //     {
+        //         Debug.DrawRay(transform.position, rayAngle*rayLength, Color.green);
+        //         targetVector = targetVector + rayAngle.normalized*avoidanceFactor*10;
+        //         return;
+        //     }
     }
 
     float wrapAround(float boundedAngle)
